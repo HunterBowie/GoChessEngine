@@ -1,10 +1,7 @@
 package main
 
-import "fmt"
+import "github.com/HunterBowie/GoChessEngine/internal/uci"
 
 func main() {
-	fmt.Println("Hello World")
-	var data string
-	fmt.Scanln(&data)
-	fmt.Println("entered: " + data)
+	uci.LoopUCI()
 }

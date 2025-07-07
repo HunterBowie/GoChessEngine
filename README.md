@@ -6,6 +6,20 @@ A chess engine built in Go that communicates using the [Universal Chess Interfac
 
 ### How to Run
 
-Must have go installed. Then run:
+Must have go installed. Then:
 
-> go build main.go
+On Mac run
+
+> go build -o output/Luna
+> ./output/Luna
+
+### Notes for Myself
+
+For building to Windows on Mac run
+
+> GOOS=windows GOARCH=386 go build -o output/Luna.exe
+> wine output/Luna.exe
+
+For Loading cutechess on Mac
+
+> open /Users/hunterbowie/.wine/drive_c/Program\ Files\ \(x86\)/Cute\ Chess
