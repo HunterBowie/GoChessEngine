@@ -16,12 +16,20 @@ type Piece int
 const None Piece = 0
 
 // first three bits (what piece is this)
-const Pawn int = 1
-const Bishop int = 2
-const Knight int = 3
-const Rook int = 4
-const Queen int = 5
-const King int = 6
+const (
+	Pawn   int = 1
+	Bishop int = 2
+	Knight int = 3
+	Rook   int = 4
+	Queen  int = 5
+	King   int = 6
+)
+
+const (
+	GamePlayState = 0
+	GameTiedState = 1
+	GameWonState  = 2
+)
 
 // fourth bit (what color is this piece)
 const White int = 0
@@ -47,6 +55,10 @@ type Board struct {
 
 /*
 Board
+
+- Bitboards: [12]uint64
+A list of breadboards for each piece type/color combination
+
 
 - ActiveColor: int
 Either 0 or 8 depending on which color is to move next on the board.
@@ -109,23 +121,34 @@ func (board *Board) Remove(pos Pos) Piece {
 
 // Play the given move on the board
 func (board *Board) PlayMove(move Move) {
+	captureOrPawn := false
+
 	piece := board.Remove(move.Start)
+	endPiece := board.Get(move.End)
+
+	if piece.Type() == Pawn || endPiece != None {
+		captureOrPawn = true
+	}
 
 	if piece.Color() != board.ActiveColor {
 		panic("Attempting to play a move with the wrong color piece")
 	}
 
-	rank := 1
+	backRank := 1
+	direction := 1
 	if board.ActiveColor == Black {
-		rank = 8
-	}	
+		backRank = 8
+		direction = -1
+	}
+
+	board.Add(move.End, piece)
 
 	switch move.Flag {
 	case BreaksCastlingRightsFlag:
 		if piece.Type() == Rook {
-			
-			leftPos := CreatePos(rank, 1)
-			rightPos := CreatePos(rank, 8)
+
+			leftPos := CreatePos(backRank, 1)
+			rightPos := CreatePos(backRank, 8)
 
 			if move.Start == leftPos {
 				board.removeQueensideCastlingRights()
@@ -145,21 +168,32 @@ func (board *Board) PlayMove(move Move) {
 	case PromoteToQueenFlag:
 		board.Add(move.End, CreatePiece(Queen|board.ActiveColor))
 	case CastleKingsideFlag:
-		board.Add(move.End, piece)
-		rook := board.Remove(CreatePos(rank, 8))
+		rook := board.Remove(CreatePos(backRank, 8))
 		board.Add(ShiftPos(move.Start, 0, 1), rook)
 		board.removeAllCastlingRights()
 	case CastleQueensideFlag:
-		board.Add(move.End, piece)
-		rook := board.Remove(CreatePos(rank, 1))
+		rook := board.Remove(CreatePos(backRank, 1))
 		board.Add(ShiftPos(move.Start, 0, -1), rook)
 		board.removeAllCastlingRights()
-	default:
-		board.Add(move.End, piece)
-
+	case PawnDoublePushFlag:
+		pos := CreatePos(backRank+2*direction, move.Start.File)
+		board.EnPassant = &pos
+	case EnPassantFlag:
+		board.Remove(ShiftPos(move.End, -direction, 0)) // remove pawn
 	}
+
+	if move.Flag != PawnDoublePushFlag {
+		board.EnPassant = nil
+	}
+
 	board.changeActiveColor()
 
+	board.FullMoves += 1
+	if !captureOrPawn {
+		board.HalfMoves += 1
+	} else {
+		board.HalfMoves = 0
+	}
 }
 
 func (board *Board) Copy() Board {
@@ -202,6 +236,26 @@ func (board *Board) removeQueensideCastlingRights() {
 	} else {
 		board.Castling = strings.ReplaceAll(board.Castling, "q", "")
 	}
+}
+
+// Returns the current game state of either play, won, or tied
+func (board *Board) GetGameState() int {
+	noMoves := len(GetAllLegalMoves(*board)) == 0
+	inCheck := IsKingInCheck(*board)
+
+	if noMoves && inCheck {
+		return GameWonState
+	}
+
+	if noMoves {
+		return GameTiedState
+	}
+
+	// fifity move rule ignored
+
+	// 3 fold repetition
+
+	return GamePlayState
 }
 
 // PIECE FUNCTIONS
@@ -283,6 +337,23 @@ func CalcBitboard(pos Pos) uint64 {
 	return uint64(answer)
 }
 
+// Returns the position created from the given bitboard with a single piece
+// Requires the given bitboard to contain exactly a single "1" binary digit
+func CalcPosFromBitboard(bitboard uint64) Pos {
+	shifts := 0
+	shiftBoard := bitboard
+	for shiftBoard > 0 {
+		shiftBoard = shiftBoard >> 1
+		shifts += 1
+	}
+	shifts -= 1
+
+	rank := int(math.Floor(float64(shifts)/8)) + 1
+	file := (shifts % 8) + 1
+
+	return CreatePos(rank, file)
+}
+
 // Returns the index of the bitboard containing board information for that piece
 func GetBitboardIndex(piece Piece) int {
 	colorIndex := 0
@@ -305,5 +376,3 @@ func GetPieceFromIndex(index int) Piece {
 	}
 	return CreatePiece(pieceType | pieceColor)
 }
-
-

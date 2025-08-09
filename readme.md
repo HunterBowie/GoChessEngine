@@ -1,0 +1,1 @@
+GOOS=js GOARCH=wasm go build -o ../ChessGUI/go/main.wasm

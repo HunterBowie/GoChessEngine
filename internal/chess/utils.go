@@ -36,34 +36,6 @@ func IsShiftIllegal(pos Pos, rankShift int, fileShift int) bool {
 	return false
 }
 
-// Load an algebraic chess position into a Pos
-func LoadPos(algebraic string) Pos {
-	callPanic := func() {
-		panic("Cannot load an algebraic position " + algebraic)
-	}
-
-	if len(algebraic) != 2 {
-		callPanic()
-	}
-	fileChar := rune(algebraic[0])
-	var file int
-	found := false
-	for index, char := range FileIndexes {
-		if fileChar == char {
-			file = index + 1
-			found = true
-			break
-		}
-	}
-	if !found {
-		callPanic()
-	}
-
-	rank := int(algebraic[1] - '0')
-
-	return CreatePos(rank, file)
-}
-
 // Loads a board from a FEN string
 func LoadBoardFromFEN(fen string) Board {
 	callPanic := func(message string) {
@@ -152,6 +124,21 @@ func LoadBoardFromFEN(fen string) Board {
 	}
 
 	return board
+}
+
+// IsKingInCheck returns true if the currently active king is under attack
+func IsKingInCheck(board Board) bool {
+	pos := CalcPosFromBitboard(board.Bitboards[GetBitboardIndex(CreatePiece(board.ActiveColor|King))])
+	// find kings position
+	boardCopy := board.Copy()
+	boardCopy.changeActiveColor()
+	moves := GetMoves(boardCopy, true, false)
+	for _, move := range moves {
+		if move.End == pos {
+			return true
+		}
+	}
+	return false
 }
 
 // PRIVATE FUNCTION DEFINITIONS

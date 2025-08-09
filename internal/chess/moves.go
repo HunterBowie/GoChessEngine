@@ -27,8 +27,12 @@ type Move struct {
 
 // PUBLIC FUNCTION DEFINTIONS
 
+func GetAllLegalMoves(board Board) []Move {
+    return GetMoves(board, false, true)
+}
+
 // GetMoves returns all possible moves for the active color
-func GetMoves(board Board, onlyAttacking bool) []Move {
+func GetMoves(board Board, onlyAttacking bool, checkIllegal bool) []Move {
 	var moves []Move
 	for rank := 1; rank <= 8; rank++ {
 		for file := 1; file <= 8; file++ {
@@ -55,7 +59,24 @@ func GetMoves(board Board, onlyAttacking bool) []Move {
 
 		}
 	}
-	return moves
+    
+    if !checkIllegal {
+        return moves
+    }
+
+    var legalMoves []Move
+
+    // check move legality
+    for _,move := range moves {
+        boardCopy := board.Copy()
+        boardCopy.PlayMove(move)
+        boardCopy.changeActiveColor() // must be orginal color
+        if !IsKingInCheck(boardCopy) {
+            legalMoves = append(legalMoves, move)
+        }
+    }
+
+	return legalMoves
 }
 
 // Generating pseudolegal moves
@@ -106,6 +127,15 @@ func getPawnMoves(board Board, pos Pos, onlyAttacking bool) []Move {
 	}
 
 	// en passant
+
+	if board.EnPassant != nil {
+		enPassant := *board.EnPassant
+		if enPassant.Rank == pos.Rank+direction {
+			if enPassant.File == pos.File+1 || enPassant.File == pos.File-1 {
+				moves = append(moves, Move{Start: pos, End: enPassant, Flag: EnPassantFlag})
+			}
+		}
+	}
 
 	return moves
 }
@@ -185,7 +215,7 @@ func attachKingsideCastle(board Board, kingPos Pos, moves *[]Move) {
 	}
 	copiedBoard := board.Copy()
 	copiedBoard.changeActiveColor()
-	attackingMoves := GetMoves(copiedBoard, true)
+	attackingMoves := GetMoves(copiedBoard, true, false)
 
 	for _, move := range attackingMoves {
 		switch move.End {
@@ -237,7 +267,7 @@ func attachQueensideCastle(board Board, kingPos Pos, moves *[]Move) {
 
 	copiedBoard := board.Copy()
 	copiedBoard.changeActiveColor()
-	attackingMoves := GetMoves(copiedBoard, true)
+	attackingMoves := GetMoves(copiedBoard, true, false)
 
 	for _, move := range attackingMoves {
 		switch move.End {
