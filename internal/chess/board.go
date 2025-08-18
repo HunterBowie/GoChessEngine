@@ -9,6 +9,16 @@ import (
 
 // DATA DEFINITIONS
 
+// Bitboard Left Shifts
+// 56 57 58 59 60 61 62 63
+// .. .. .. .. .. .. .. ..
+// .. .. .. .. .. .. .. ..
+// .. .. .. .. .. .. .. ..
+// .. .. .. .. .. .. .. ..
+// .. .. .. .. .. .. .. ..
+// 8  9 10 11 12 13 14 15
+// 0  1  2  3  4  5  6  7
+
 // A chess piece with a type and color
 // null piece is 0
 type Piece int
@@ -18,8 +28,8 @@ const None Piece = 0
 // first three bits (what piece is this)
 const (
 	Pawn   int = 1
-	Bishop int = 2
-	Knight int = 3
+	Knight int = 2
+	Bishop int = 3
 	Rook   int = 4
 	Queen  int = 5
 	King   int = 6
@@ -46,6 +56,7 @@ type Pos struct {
 // Stores a board state (equivalent to FEN data)
 type Board struct {
 	Bitboards   [12]uint64
+	PieceLists  [12][]Piece // to implement
 	ActiveColor int
 	Castling    string
 	EnPassant   *Pos
@@ -188,7 +199,9 @@ func (board *Board) PlayMove(move Move) {
 
 	board.changeActiveColor()
 
-	board.FullMoves += 1
+	if board.ActiveColor == White {
+		board.FullMoves += 1
+	}
 	if !captureOrPawn {
 		board.HalfMoves += 1
 	} else {
@@ -340,6 +353,7 @@ func CalcBitboard(pos Pos) uint64 {
 // Returns the position created from the given bitboard with a single piece
 // Requires the given bitboard to contain exactly a single "1" binary digit
 func CalcPosFromBitboard(bitboard uint64) Pos {
+	// TODO: optimize
 	shifts := 0
 	shiftBoard := bitboard
 	for shiftBoard > 0 {
@@ -348,9 +362,13 @@ func CalcPosFromBitboard(bitboard uint64) Pos {
 	}
 	shifts -= 1
 
+	return BitboardShiftsToPos(shifts)
+}
+
+// Returns the position created from the number of trailing zeros on the bitboard
+func BitboardShiftsToPos(shifts int) Pos {
 	rank := int(math.Floor(float64(shifts)/8)) + 1
 	file := (shifts % 8) + 1
-
 	return CreatePos(rank, file)
 }
 

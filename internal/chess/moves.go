@@ -28,11 +28,11 @@ type Move struct {
 // PUBLIC FUNCTION DEFINTIONS
 
 func GetAllLegalMoves(board Board) []Move {
-    return GetMoves(board, false, true)
+	return GetMoves(board, false, true, false)
 }
 
 // GetMoves returns all possible moves for the active color
-func GetMoves(board Board, onlyAttacking bool, checkIllegal bool) []Move {
+func GetMoves(board Board, onlyAttacking bool, checkIllegal bool, onlyTaking bool) []Move {
 	var moves []Move
 	for rank := 1; rank <= 8; rank++ {
 		for file := 1; file <= 8; file++ {
@@ -59,24 +59,27 @@ func GetMoves(board Board, onlyAttacking bool, checkIllegal bool) []Move {
 
 		}
 	}
-    
-    if !checkIllegal {
-        return moves
-    }
 
-    var legalMoves []Move
+	if !checkIllegal && !onlyTaking {
+		return moves
+	}
 
-    // check move legality
-    for _,move := range moves {
-        boardCopy := board.Copy()
-        boardCopy.PlayMove(move)
-        boardCopy.changeActiveColor() // must be orginal color
-        if !IsKingInCheck(boardCopy) {
-            legalMoves = append(legalMoves, move)
-        }
-    }
+	var filteredMoves []Move
 
-	return legalMoves
+	// check move legality and if take moves
+	for _, move := range moves {
+		boardCopy := board.Copy()
+		boardCopy.PlayMove(move)
+		boardCopy.changeActiveColor() // must be orginal color
+		if onlyAttacking && boardCopy.Get(move.End) == None {
+			continue
+		}
+		if checkIllegal && !IsKingInCheck(boardCopy) {
+			filteredMoves = append(filteredMoves, move)
+		}
+	}
+
+	return filteredMoves
 }
 
 // Generating pseudolegal moves
@@ -215,7 +218,7 @@ func attachKingsideCastle(board Board, kingPos Pos, moves *[]Move) {
 	}
 	copiedBoard := board.Copy()
 	copiedBoard.changeActiveColor()
-	attackingMoves := GetMoves(copiedBoard, true, false)
+	attackingMoves := GetMoves(copiedBoard, true, false, false)
 
 	for _, move := range attackingMoves {
 		switch move.End {
@@ -267,7 +270,7 @@ func attachQueensideCastle(board Board, kingPos Pos, moves *[]Move) {
 
 	copiedBoard := board.Copy()
 	copiedBoard.changeActiveColor()
-	attackingMoves := GetMoves(copiedBoard, true, false)
+	attackingMoves := GetMoves(copiedBoard, true, false, false)
 
 	for _, move := range attackingMoves {
 		switch move.End {

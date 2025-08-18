@@ -132,7 +132,7 @@ func IsKingInCheck(board Board) bool {
 	// find kings position
 	boardCopy := board.Copy()
 	boardCopy.changeActiveColor()
-	moves := GetMoves(boardCopy, true, false)
+	moves := GetMoves(boardCopy, true, false, false)
 	for _, move := range moves {
 		if move.End == pos {
 			return true

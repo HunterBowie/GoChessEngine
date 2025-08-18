@@ -22,16 +22,26 @@ func GetBotMove(this js.Value, args []js.Value) interface{} {
 
 	board := chess.LoadBoardFromFEN(fen)
 
-	// moves := chess.GetAllLegalMoves(board)
-	// index := rand.Intn(len(moves))
-	// move := moves[index]
-
 	results := minimax.Search(board, 3)
 	moveRaw := chess.MoveToAlgebraic(*results.BestMove)
 
 	output := moveRaw + "-" + strconv.Itoa(results.BestMove.Flag)
 
-	// time.Sleep(time.Duration(timeLeft) * time.Millisecond)
+	return output
+}
+
+// GetBotEval returns the evaluation for given chess bot and position
+// GetBotEval(bot string, settings int, fen string) string
+func GetBotEval(this js.Value, args []js.Value) interface{} {
+	// bot := args[0].String()
+	// settings := args[1].Int()
+	fen := args[2].String()
+
+	board := chess.LoadBoardFromFEN(fen)
+
+	score := minimax.Evaluate(board)
+
+	output := strconv.Itoa(score)
 
 	return output
 }
@@ -40,9 +50,9 @@ func GetBotMove(this js.Value, args []js.Value) interface{} {
 func runWebAssembly() {
 	c := make(chan struct{}, 0)
 	js.Global().Set("GetBotMove", js.FuncOf(GetBotMove))
+	js.Global().Set("GetBotEval", js.FuncOf(GetBotEval))
 	<-c
 }
-
 
 func main() {
 	runWebAssembly()
