@@ -1,7 +1,6 @@
 package minimax
 
 import (
-	"math"
 	"math/bits"
 
 	"github.com/HunterBowie/GoChessEngine/internal/chess"
@@ -27,22 +26,6 @@ var pieceValues = map[int]int{
 
 // Returns a score the reflects how good the position is for white
 func Evaluate(board chess.Board) int {
-
-	state := board.GetGameState()
-	if state != chess.GamePlayState {
-		if state == chess.GameWonState {
-			if board.ActiveColor == chess.Black {
-				// White Won
-				return math.MaxInt
-			}
-			// Black Won
-			return math.MinInt
-		} else {
-			// Tied
-			return 0
-		}
-	}
-
 	score := 0
 
 	for _, color := range [2]int{chess.White, chess.Black} {

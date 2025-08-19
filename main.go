@@ -17,12 +17,12 @@ import (
 func GetBotMove(this js.Value, args []js.Value) interface{} {
 	// bot := args[0].String()
 	// settings := args[1].Int()
-	// timeLeft := args[2].Int()
+	timeLeft := args[2].Int()
 	fen := args[3].String()
 
 	board := chess.LoadBoardFromFEN(fen)
 
-	results := minimax.Search(board, 3)
+	results := minimax.Search(board, timeLeft)
 	moveRaw := chess.MoveToAlgebraic(*results.BestMove)
 
 	output := moveRaw + "-" + strconv.Itoa(results.BestMove.Flag)
