@@ -22,10 +22,18 @@ func GetBotMove(this js.Value, args []js.Value) interface{} {
 
 	board := chess.LoadBoardFromFEN(fen)
 
-	results := minimax.Search(board, timeLeft)
-	moveRaw := chess.MoveToAlgebraic(*results.BestMove)
+	var output string
 
-	output := moveRaw + "-" + strconv.Itoa(results.BestMove.Flag)
+	if board.FullMoves == 1 && board.ActiveColor == chess.White {
+		move := minimax.GetOpeningWhiteMove()
+		moveRaw := chess.MoveToAlgebraic(move)
+		output = moveRaw + "-" + strconv.Itoa(move.Flag)
+	} else {
+		results := minimax.Search(board, timeLeft)
+		moveRaw := chess.MoveToAlgebraic(*results.BestMove)
+
+		output = moveRaw + "-" + strconv.Itoa(results.BestMove.Flag)
+	}
 
 	return output
 }
