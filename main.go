@@ -68,18 +68,18 @@ func GetBotEval(c *gin.Context) {
 func main() {
 	router := gin.Default()
 	// CORS middleware
-	router.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*") // allow all domains
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization")
+	// router.Use(func(c *gin.Context) {
+	// 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*") // allow all domains
+	// 	c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	// 	c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization")
 
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(200) // respond to preflight
-			return
-		}
+	// 	if c.Request.Method == "OPTIONS" {
+	// 		c.AbortWithStatus(200) // respond to preflight
+	// 		return
+	// 	}
 
-		c.Next()
-	})
+	// 	c.Next()
+	// })
 	router.GET("/minimax/bestmove", GetBotMove)
 	router.GET("/minimax/eval", GetBotEval)
 
