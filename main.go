@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/HunterBowie/GoChessEngine/internal/chess"
 	"github.com/HunterBowie/GoChessEngine/internal/minimax"
@@ -69,7 +70,14 @@ func GetBotEval(c *gin.Context) {
 func main() {
 	// gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
-	router.Use(cors.Default())
+	router.Use(cors.New(cors.Config{
+        AllowOrigins:     []string{"*"}, // restrict or use "*" for all
+        AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+        AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+        ExposeHeaders:    []string{"Content-Length"},
+        AllowCredentials: true,
+        MaxAge:           12 * time.Hour,
+    }))
 	router.GET("/minimax/bestmove", GetBotMove)
 	router.GET("/minimax/eval", GetBotEval)
 
