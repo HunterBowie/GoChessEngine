@@ -66,7 +66,7 @@ func GetBotEval(c *gin.Context) {
 }
 
 func main() {
-	gin.SetMode(gin.ReleaseMode)
+	// gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.GET("/minimax/bestmove", GetBotMove)
 	router.GET("/minimax/eval", GetBotEval)
