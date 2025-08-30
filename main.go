@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/HunterBowie/GoChessEngine/internal/chess"
 	"github.com/HunterBowie/GoChessEngine/internal/minimax"
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -68,16 +66,20 @@ func GetBotEval(c *gin.Context) {
 }
 
 func main() {
-	// gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
-	router.Use(cors.New(cors.Config{
-        AllowOrigins:     []string{"*"}, // restrict or use "*" for all
-        AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-        AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-        ExposeHeaders:    []string{"Content-Length"},
-        AllowCredentials: true,
-        MaxAge:           12 * time.Hour,
-    }))
+	// CORS middleware
+	router.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*") // allow all domains
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(200) // respond to preflight
+			return
+		}
+
+		c.Next()
+	})
 	router.GET("/minimax/bestmove", GetBotMove)
 	router.GET("/minimax/eval", GetBotEval)
 
