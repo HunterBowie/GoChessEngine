@@ -14,7 +14,7 @@ type SearchResults struct {
 
 func Search(board chess.Board, timeMilliseconds int) SearchResults {
 	startTime := time.Now()
-	return search(board, 3, math.MinInt, math.MaxInt, startTime, int64(timeMilliseconds))
+	return search(board, 4, math.MinInt, math.MaxInt, startTime, int64(timeMilliseconds))
 }
 
 // Search performs a minimax search to the given depth
