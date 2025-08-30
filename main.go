@@ -7,6 +7,7 @@ import (
 
 	"github.com/HunterBowie/GoChessEngine/internal/chess"
 	"github.com/HunterBowie/GoChessEngine/internal/minimax"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -68,6 +69,7 @@ func GetBotEval(c *gin.Context) {
 func main() {
 	// gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
+	router.Use(cors.Default())
 	router.GET("/minimax/bestmove", GetBotMove)
 	router.GET("/minimax/eval", GetBotEval)
 
