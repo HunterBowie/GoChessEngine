@@ -1,69 +1,77 @@
-//go:build wasm
-
 package main
 
 import (
 	"fmt"
-	"strconv"
+	"net/http"
 	"strings"
-	"syscall/js"
 
 	"github.com/HunterBowie/GoChessEngine/internal/chess"
 	"github.com/HunterBowie/GoChessEngine/internal/minimax"
+	"github.com/gin-gonic/gin"
 )
 
-// GetBotMove returns the move for given chess bot and position
-// GetBotMove(bot string, settings int, time int, fen string) string
-func GetBotMove(this js.Value, args []js.Value) interface{} {
-	// bot := args[0].String()
-	// settings := args[1].Int()
-	timeLeft := args[2].Int()
-	fen := args[3].String()
+type BestMoveResponse struct {
+	FEN      string `json:"fen"`
+	BestMove string `json:"best_move"`
+	MoveFlag int    `json:"move_flag"`
+}
+
+type EvalResponse struct {
+	FEN  string `json:"fen"`
+	Eval int    `json:"eval"`
+}
+
+// GetBotMove handles the bot best move generation requests
+func GetBotMove(c *gin.Context) {
+	fen := c.Query("fen")
 
 	board := chess.LoadBoardFromFEN(fen)
 
-	var output string
+	var bestMove string
+	var flag int
 
 	if board.FullMoves == 1 && board.ActiveColor == chess.White {
 		move := minimax.GetOpeningWhiteMove()
-		moveRaw := chess.MoveToAlgebraic(move)
-		output = moveRaw + "-" + strconv.Itoa(move.Flag)
+		bestMove = chess.MoveToAlgebraic(move)
+		flag = move.Flag
 	} else {
-		results := minimax.Search(board, timeLeft)
-		moveRaw := chess.MoveToAlgebraic(*results.BestMove)
-
-		output = moveRaw + "-" + strconv.Itoa(results.BestMove.Flag)
+		results := minimax.Search(board, 1)
+		bestMove = chess.MoveToAlgebraic(*results.BestMove)
+		flag = results.BestMove.Flag
 	}
 
-	return output
+	output := BestMoveResponse{
+		FEN:      fen,
+		BestMove: bestMove,
+		MoveFlag: flag,
+	}
+
+	c.IndentedJSON(http.StatusOK, output)
 }
 
-// GetBotEval returns the evaluation for given chess bot and position
-// GetBotEval(bot string, settings int, fen string) string
-func GetBotEval(this js.Value, args []js.Value) interface{} {
-	// bot := args[0].String()
-	// settings := args[1].Int()
-	fen := args[2].String()
+// GetBotEval handles the bot evaluation requests
+func GetBotEval(c *gin.Context) {
+	fen := c.Query("fen")
 
 	board := chess.LoadBoardFromFEN(fen)
 
 	score := minimax.Evaluate(board)
 
-	output := strconv.Itoa(score)
+	output := EvalResponse{
+		FEN:  fen,
+		Eval: score,
+	}
+	c.IndentedJSON(http.StatusOK, output)
 
-	return output
-}
-
-// Runs a program that makes GetBotMove visible in a web assembly file
-func runWebAssembly() {
-	c := make(chan struct{}, 0)
-	js.Global().Set("GetBotMove", js.FuncOf(GetBotMove))
-	js.Global().Set("GetBotEval", js.FuncOf(GetBotEval))
-	<-c
 }
 
 func main() {
-	runWebAssembly()
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.Default()
+	router.GET("/minimax/bestmove", GetBotMove)
+	router.GET("/minimax/eval", GetBotEval)
+
+	router.Run(":8080")
 }
 
 // printBoard prints a chess board to the console

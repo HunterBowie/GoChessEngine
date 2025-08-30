@@ -10,9 +10,9 @@
             "problemMatcher": []
         },
         {
-            "label": "Run Go Testing",
+            "label": "Run Go",
             "type": "shell",
-            "command": "go run test.go",
+            "command": "go run .",
             "problemMatcher": [
                 "$armcc5"
             ]
