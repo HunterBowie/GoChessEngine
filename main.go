@@ -80,8 +80,8 @@ func main() {
 
 		c.Next()
 	})
-	router.GET("/minimax/bestmove", GetBotMove)
-	router.GET("/minimax/eval", GetBotEval)
+	router.GET("/minimax/getBestMove", GetBotMove)
+	router.GET("/minimax/getEval", GetBotEval)
 
 	router.Run(":8080")
 }
